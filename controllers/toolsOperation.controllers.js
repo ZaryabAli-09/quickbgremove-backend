@@ -3,7 +3,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import sharp from "sharp";
+import FormData from "form-data";
 
+import fetch from "node-fetch";
 // add python3 instead of python before pushing to github
 
 // Finding absolute path
@@ -13,61 +15,56 @@ const __dirname = path.dirname(__filename);
 async function removeBg(req, res, next) {
   try {
     if (!req.file) {
-      return res.status(400).json({
-        message: "No file uploaded",
-      });
+      return res.status(400).json({ message: "No file uploaded" });
     }
 
     const filePath = path.resolve(__dirname, "../public/", req.file.filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "Uploaded file not found" });
+    }
+
+    const formData = new FormData();
+    formData.append("input_file", fs.createReadStream(filePath));
+
+    const response = await fetch(
+      "https://zaryab009-remove-bg-api.hf.space/remove-bg",
+      {
+        method: "POST",
+        body: formData,
+        headers: formData.getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        `FastAPI request failed: ${response.statusText} - ${errorText}`
+      );
+      throw new Error(`FastAPI request failed: ${response.status}`);
+    }
+
+    const outputImage = await response.buffer();
     const outputPath = path.resolve(
       __dirname,
       "../public/",
-      `quickbgremove_${req.file.filename}.png`
+      `quickbgremove_${req.file.filename}`
     );
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        message: "Uploaded file not found",
-      });
-    }
+    fs.writeFileSync(outputPath, outputImage);
 
-    const pythonScriptPath = path.resolve(__dirname, "../remove_background.py");
-
-    const command = `python3 "${pythonScriptPath}" "${filePath}" "${outputPath}"`;
-
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error executing script: ${error.message}`);
-        console.error(`stderr: ${stderr}`);
-        return res
-          .status(500)
-          .json({ message: "Error occurred while processing image" });
+    res.sendFile(outputPath, (err) => {
+      if (err) {
+        res.status(500).json({ message: "Error sending image back" });
+      } else {
+        fs.unlinkSync(filePath);
+        fs.unlinkSync(outputPath);
       }
-
-      console.log(`stdout: ${stdout}`);
-
-      if (!fs.existsSync(outputPath)) {
-        console.log("Output file not found");
-        return res.status(404).json({ message: "Output file not found" });
-      }
-
-      res.sendFile(outputPath, (err) => {
-        if (err) {
-          res.status(500).json({
-            message: "Error occurred while sending image back to you",
-          });
-        } else {
-          fs.unlinkSync(filePath);
-          fs.unlinkSync(outputPath);
-        }
-      });
     });
   } catch (error) {
-    // when we catch error the file will be remain in public folder   .... bug
-    return next(error);
+    next(error);
   }
 }
-
 async function resizeImg(req, res, next) {
   try {
     let { width, height } = req.body;
