@@ -10,13 +10,13 @@ import { errorMiddleware } from "./middlewares/error.js";
 
 dotenv.config();
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 // built in middlewares
 app.use(compression()); // Gzip compression
 app.use(helmet()); // Secure HTTP headers
 app.use(express.json());
-app.use(cors());
+app.use(cors(["https://quickbgremove.netlify.app", "http://localhost:5173"])); // CORS for specific origins
 
 // middlewares
 app.use(errorMiddleware);
