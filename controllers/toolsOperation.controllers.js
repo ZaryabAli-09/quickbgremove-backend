@@ -86,7 +86,7 @@ async function resizeImg(req, res, next) {
     // resize the image
     await sharp(filePath)
       .resize(width, height, { fit: "cover", position: "center" })
-      .toFormat("jpeg", { quality: 90 }) // Set quality level (for lossy formats like JPEG)
+      .png({ compressionLevel: 9 }) // PNG keeps alpha channel
       .toFile(outputFilePath);
 
     res.download(outputFilePath, (err) => {
@@ -104,4 +104,46 @@ async function resizeImg(req, res, next) {
   }
 }
 
-export { removeBg, resizeImg };
+async function upscaleImg(req, res, next) {
+  try {
+    console.log("hello");
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({
+        message: "Image not found",
+      });
+    }
+
+    const filePath = path.resolve(__dirname, "../public/", file.filename);
+    const outputFilePath = path.resolve(
+      __dirname,
+      "../public/",
+      `quickbgremove${Date.now()}.png`
+    );
+
+    await sharp(filePath)
+      .sharpen({ sigma: 1 })
+      .gamma(2.5)
+      .normalise()
+      .modulate({ brightness: 1.1, saturation: 1.1 })
+
+      .png({ compressionLevel: 9 })
+      .toFile(outputFilePath);
+
+    res.download(outputFilePath, (err) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: "Error downloading resized image" });
+      }
+      // Optionally delete the original and resized images after download
+      fs.unlinkSync(filePath);
+      fs.unlinkSync(outputFilePath);
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+}
+
+export { removeBg, resizeImg, upscaleImg };
