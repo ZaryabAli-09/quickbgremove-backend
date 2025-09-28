@@ -106,7 +106,6 @@ async function resizeImg(req, res, next) {
 
 async function upscaleImg(req, res, next) {
   try {
-    console.log("hello");
     const file = req.file;
     if (!file) {
       return res.status(400).json({
@@ -146,4 +145,91 @@ async function upscaleImg(req, res, next) {
   }
 }
 
-export { removeBg, resizeImg, upscaleImg };
+async function mergingBgEdits(req, res, next) {
+  try {
+    console.log(req.files);
+    const mainImage = req.files?.image?.[0];
+    const bgImage = req.files?.bgImage?.[0];
+    const { bgColor, bgImageUrl } = req.body;
+
+    console.log(bgImage);
+    if (!mainImage) {
+      return res.status(400).json({ message: "image not found" });
+    }
+
+    let finalImage;
+
+    const { width, height } = await sharp(mainImage.path).metadata();
+
+    let bgImagePath;
+    if (bgImage) {
+      bgImagePath = path.resolve(__dirname, "../public/", bgImage.filename);
+    }
+    const mainImagePath = path.resolve(
+      __dirname,
+      "../public/",
+      mainImage.filename
+    );
+
+    const outputFilePath = path.resolve(
+      __dirname,
+      "../public/",
+      `quickResize_${Date.now()}.png`
+    );
+
+    // --- Case: bgColor applied ---
+    if (bgColor) {
+      finalImage = await sharp({
+        create: {
+          width,
+          height,
+          channels: 4,
+          background: bgColor,
+        },
+      })
+        .composite([{ input: mainImage.path, gravity: "center" }])
+        .png()
+        .toFile(outputFilePath);
+    }
+    // --- Case 2: Background image (uploaded file) ---
+    else if (bgImage) {
+      await sharp(bgImage.path)
+        .resize(width, height)
+        .composite([{ input: mainImage.path, gravity: "center" }])
+        .png()
+        .toFile(outputFilePath);
+    } else if (bgImageUrl) {
+      const response = await fetch(bgImageUrl);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch background image: ${response.statusText}`
+        );
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      const backgroundBuffer = Buffer.from(arrayBuffer);
+
+      await sharp(backgroundBuffer)
+        .resize(width, height)
+        .composite([{ input: mainImage.path, gravity: "center" }])
+        .png()
+        .toFile(outputFilePath);
+    }
+    res.download(outputFilePath, (err) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: "Error downloading resized image" });
+      }
+      fs.unlinkSync(outputFilePath);
+      fs.unlinkSync(mainImagePath);
+      if (bgImagePath) fs.unlinkSync(bgImagePath);
+    });
+  } catch (error) {
+    fs.unlinkSync(outputFilePath);
+    fs.unlinkSync(mainImagePath);
+    if (bgImagePath) fs.unlinkSync(bgImagePath);
+    next(error);
+  }
+}
+
+export { removeBg, resizeImg, upscaleImg, mergingBgEdits };
