@@ -43,14 +43,15 @@ async function removeBg(req, res, next) {
       throw new Error(`FastAPI request failed: ${response.status}`);
     }
 
-    const outputImage = await response.buffer();
+    const outputImage = await response.arrayBuffer();
+    const outputImageBuffer = Buffer.from(outputImage);
     const outputPath = path.resolve(
       __dirname,
       "../public/",
       `quickbgremove_${req.file.filename}`
     );
 
-    fs.writeFileSync(outputPath, outputImage);
+    fs.writeFileSync(outputPath, outputImageBuffer);
 
     res.sendFile(outputPath, (err) => {
       if (err) {
