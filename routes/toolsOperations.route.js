@@ -2,6 +2,7 @@ import express from "express";
 import { uploadFileUsingMulter } from "../middlewares/multer.js";
 
 import {
+  generateImage,
   mergingBgEdits,
   removeBg,
   resizeImg,
@@ -27,5 +28,6 @@ router.post(
   ]),
   mergingBgEdits
 );
+router.post("/generateImage", generateImage);
 
 export default router;
