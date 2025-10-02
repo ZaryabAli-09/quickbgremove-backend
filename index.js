@@ -39,11 +39,11 @@ app.listen(port, () => {
   console.log(`Server is running on ${port} port `);
 
   // database connection
-  dbConnection()
-    .then(() => {
-      console.log("db connected");
-    })
-    .catch((err) => {
-      console.log("db not connected", err);
-    });
+  // dbConnection()
+  //   .then(() => {
+  //     console.log("db connected");
+  //   })
+  //   .catch((err) => {
+  //     console.log("db not connected");
+  //   });
 });

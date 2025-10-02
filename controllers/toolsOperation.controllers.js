@@ -141,19 +141,16 @@ async function upscaleImg(req, res, next) {
       fs.unlinkSync(outputFilePath);
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 }
 
 async function mergingBgEdits(req, res, next) {
   try {
-    console.log(req.files);
     const mainImage = req.files?.image?.[0];
     const bgImage = req.files?.bgImage?.[0];
     const { bgColor, bgImageUrl } = req.body;
 
-    console.log(bgImage);
     if (!mainImage) {
       return res.status(400).json({ message: "image not found" });
     }
@@ -236,7 +233,6 @@ async function mergingBgEdits(req, res, next) {
 async function generateImage(req, res, next) {
   try {
     const { prompt } = req.body;
-    console.log(prompt);
 
     // Check if prompt is provided
     if (!prompt) {
