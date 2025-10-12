@@ -313,7 +313,13 @@ async function generateImage(req, res, next) {
 
     res.json({ imageUrl: result?.data[0]?.url });
   } catch (error) {
-    console.error(error);
+    if (error.success === false && error.stage === "error") {
+      return res.status(500).json({
+        message:
+          "Service is temporarily unavailable. This happens because it's running on a shared public model. Please try again shortly.",
+      });
+    }
+    console.error();
     next(error);
   }
 }
