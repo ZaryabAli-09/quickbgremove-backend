@@ -302,10 +302,17 @@ async function generateImage(req, res, next) {
       return res.status(400).json({ message: "Prompt is required" });
     }
 
-    const client = await Client.connect("Ifeanyi/Gemini-Image-Generator");
-    const result = await client.predict("/predict", {
+    const client = await Client.connect("black-forest-labs/FLUX.1-schnell");
+    const result = await client.predict("/infer", {
       prompt: prompt,
+      seed: 0,
+      randomize_seed: true,
+      width: 512,
+      height: 512,
+      num_inference_steps: 1,
     });
+
+    console.log(result.data);
 
     if (!result) {
       return res.status(500).json({ message: "Error generating image" });
