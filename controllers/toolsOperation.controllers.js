@@ -31,13 +31,13 @@ async function removeBg(req, res, next) {
         method: "POST",
         body: formData,
         headers: formData.getHeaders(),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(
-        `FastAPI request failed: ${response.statusText} - ${errorText}`
+        `FastAPI request failed: ${response.statusText} - ${errorText}`,
       );
       throw new Error(`FastAPI request failed: ${response.status}`);
     }
@@ -47,7 +47,7 @@ async function removeBg(req, res, next) {
     const outputPath = path.resolve(
       __dirname,
       "../public/",
-      `quickbgremove_${req.file.filename}`
+      `quickbgremove_${req.file.filename}`,
     );
 
     fs.writeFileSync(outputPath, outputImageBuffer);
@@ -80,7 +80,7 @@ async function resizeImg(req, res, next) {
     const outputFilePath = path.resolve(
       __dirname,
       "../public/",
-      `quickResize_${Date.now()}.png`
+      `quickResize_${Date.now()}.png`,
     );
 
     // resize the image
@@ -117,7 +117,7 @@ async function upscaleImg(req, res, next) {
     const outputFilePath = path.resolve(
       __dirname,
       "../public/",
-      `quickbgremove${Date.now()}.png`
+      `quickbgremove${Date.now()}.png`,
     );
 
     await sharp(filePath)
@@ -165,13 +165,13 @@ async function mergingBgEdits(req, res, next) {
     const mainImagePath = path.resolve(
       __dirname,
       "../public/",
-      mainImage.filename
+      mainImage.filename,
     );
 
     const outputFilePath = path.resolve(
       __dirname,
       "../public/",
-      `quickResize_${Date.now()}.png`
+      `quickResize_${Date.now()}.png`,
     );
 
     // --- Case: bgColor applied ---
@@ -199,7 +199,7 @@ async function mergingBgEdits(req, res, next) {
       const response = await fetch(bgImageUrl);
       if (!response.ok) {
         throw new Error(
-          `Failed to fetch background image: ${response.statusText}`
+          `Failed to fetch background image: ${response.statusText}`,
         );
       }
       const arrayBuffer = await response.arrayBuffer();
@@ -228,71 +228,6 @@ async function mergingBgEdits(req, res, next) {
     next(error);
   }
 }
-
-// async function generateImage(req, res, next) {
-//   try {
-//     const { prompt } = req.body;
-
-//     // Check if prompt is provided
-//     if (!prompt) {
-//       return res.status(400).json({ message: "Prompt is required" });
-//     }
-
-//     // Call Hugging Face Inference API
-//     const response = await fetch(
-//       "https://router.huggingface.co/nscale/v1/images/generations",
-//       {
-//         method: "POST",
-//         headers: {
-//           Authorization: `bearer ${process.env.HF_STABILITY_IMG_GEN_ACCESS_TOKEN}`,
-//           Authorization: `Bearer ${process.env.HF_STABILITY_IMG_GEN_ACCESS_TOKEN}`,
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           response_format: "b64_json",
-//           prompt,
-//           model: "stabilityai/stable-diffusion-xl-base-1.0",
-//         }),
-//       }
-//     );
-
-//     console.log(response);
-
-//     // Check if the response is OK
-//     if (!response.ok) {
-//       const err = await response.text();
-//       return res.status(500).json({ message: err });
-//     }
-
-//     // Parse the response and return the base64 string
-//     const result = await response.json();
-//     const base64 = result.data[0].b64_json;
-//     // Convert base64 -> Buffer
-//     const buffer = Buffer.from(base64, "base64");
-
-//     // Save temp file
-//     const outputPath = path.resolve(
-//       __dirname,
-//       "../public/",
-//       `generated_${Date.now()}.png`
-//     );
-//     fs.writeFileSync(outputPath, buffer);
-
-//     // Send back the file
-//     res.sendFile(outputPath, (err) => {
-//       if (err) {
-//         console.error("Error sending image:", err);
-//         res.status(500).json({ message: "Error sending image back" });
-//       } else {
-//         // cleanup
-//         fs.unlinkSync(outputPath);
-//       }
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     next(error);
-//   }
-// }
 
 async function generateImage(req, res, next) {
   try {
